@@ -1,29 +1,48 @@
-pub struct NeuralNetwork<'a> {
-    data: Vec<f32>,
-    activations: Vec<char>,
+extern crate rand;
 
-    pub inputs: &'a [f32],
-    pub hiddens: &'a [f32],
-    pub outputs: &'a [f32],
+use rand::Rng;
+
+#[derive(Debug)]
+pub struct NeuralNetwork {
+    data: Vec<f32>,
+    activations: Vec<u8>,
+
+    inputs: i32,
+    hiddens: i32,
+    outputs: i32,
+    hidden_layers: i32,
 
     pub bias: f32,
 }
 
-impl<'a> NeuralNetwork<'a> {
+impl NeuralNetwork {
     pub fn new(
-        inputAmount: i32,
-        hiddenAmount: i32,
-        outputAmount: i32,
-        hiddenLayerAmount: i32,
-    ) -> NeuralNetwork<'a> {
-        let totalSize = inputAmount + (hiddenAmount * hiddenLayerAmount) + outputAmount;
-        let activationSize = (hiddenAmount * hiddenLayerAmount) + outputAmount;
+        input_amount: i32,
+        hidden_amount: i32,
+        output_amount: i32,
+        hidden_layer_amount: i32,
+    ) -> NeuralNetwork {
+        let total_size = input_amount + (hidden_amount * hidden_layer_amount) + output_amount;
+        let activation_size = (hidden_amount * hidden_layer_amount) + output_amount;
 
         NeuralNetwork {
-            data: vec![0; totalSize as usize],
-            activations: vec![0; activationSize as usize],
+            data: vec![0.0; total_size as usize],
+            activations: vec![0; activation_size as usize],
+
+            inputs: input_amount,
+            hiddens: hidden_amount,
+            outputs: output_amount,
+            hidden_layers: hidden_layer_amount,
 
             bias: -1.0
+        }
+    }
+
+    pub fn randomize(&mut self) {
+        let mut rng = rand::thread_rng();
+
+        for node in self.data.iter_mut() {
+            *node = rng.gen::<f32>();
         }
     }
 }
