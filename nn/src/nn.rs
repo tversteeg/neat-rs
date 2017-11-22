@@ -1,5 +1,4 @@
-extern crate rand;
-
+use rand;
 use rand::Rng;
 
 #[derive(Debug)]
