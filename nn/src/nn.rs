@@ -1,37 +1,45 @@
 use rand;
-use rand::Rng;
+use rand::distributions::{IndependentSample, Range};
+
+#[derive(Debug, Copy, Clone)]
+pub struct NeuralNode {
+    weight: f32,
+    activation: u8
+}
+
+impl NeuralNode {
+    pub fn new() -> NeuralNode {
+        NeuralNode {
+            weight: 0.0,
+            activation: 0
+        }
+    }
+}
 
 #[derive(Debug)]
 pub struct NeuralNetwork {
-    data: Vec<f32>,
-    activations: Vec<u8>,
-
-    inputs: i32,
-    hiddens: i32,
-    outputs: i32,
-    hidden_layers: i32,
+    inputs: Vec<NeuralNode>,
+    hiddens: Vec<Vec<NeuralNode>>,
+    outputs: Vec<NeuralNode>,
 
     pub bias: f32,
 }
 
 impl NeuralNetwork {
     pub fn new(
-        input_amount: i32,
-        hidden_amount: i32,
-        output_amount: i32,
-        hidden_layer_amount: i32,
+        input_amount: usize,
+        hidden_amount: usize,
+        output_amount: usize,
+        hidden_layer_amount: usize,
     ) -> NeuralNetwork {
-        let total_size = input_amount + (hidden_amount * hidden_layer_amount) + output_amount;
-        let activation_size = (hidden_amount * hidden_layer_amount) + output_amount;
+        let node = NeuralNode::new();
+
+        let hidden_layer = vec![node; hidden_amount];
 
         NeuralNetwork {
-            data: vec![0.0; total_size as usize],
-            activations: vec![0; activation_size as usize],
-
-            inputs: input_amount,
-            hiddens: hidden_amount,
-            outputs: output_amount,
-            hidden_layers: hidden_layer_amount,
+            inputs: vec![node; input_amount],
+            hiddens: vec![hidden_layer; hidden_layer_amount],
+            outputs: vec![node; output_amount],
 
             bias: -1.0
         }
@@ -39,9 +47,27 @@ impl NeuralNetwork {
 
     pub fn randomize(&mut self) {
         let mut rng = rand::thread_rng();
+        let range = Range::new(-2.0, 2.0);
 
-        for node in self.data.iter_mut() {
-            *node = rng.gen::<f32>();
+        for node in self.inputs.iter_mut() {
+            node.weight = range.ind_sample(&mut rng);
+        }
+
+        for layer in self.hiddens.iter_mut() {
+            for node in layer.iter_mut() {
+                node.weight = range.ind_sample(&mut rng);
+            }
+        }
+
+        for node in self.outputs.iter_mut() {
+            node.weight = range.ind_sample(&mut rng);
+        }
+    }
+
+    pub fn run(&mut self, inputs: &[f32]) {
+        // Copy inputs to the output space
+        for i in 0 .. inputs.len() {
+            
         }
     }
 }
