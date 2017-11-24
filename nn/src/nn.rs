@@ -39,6 +39,16 @@ impl NeuralNetwork {
         output_amount: usize,
         hidden_layer_amount: usize,
     ) -> NeuralNetwork {
+        if input_amount == 0 {
+            panic!("Amount of network input nodes needs to be bigger than 0.")
+        }
+        if hidden_amount == 0 {
+            panic!("Amount of network hidden nodes needs to be bigger than 0.")
+        }
+        if output_amount == 0 {
+            panic!("Amount of network output nodes needs to be bigger than 0.")
+        }
+
         NeuralNetwork {
             nodes: vec![Default::default(); NeuralNetwork::node_len(input_amount, hidden_amount, output_amount, hidden_layer_amount)],
             weights: vec![0.0; NeuralNetwork::weight_len(input_amount, hidden_amount, output_amount, hidden_layer_amount)],
