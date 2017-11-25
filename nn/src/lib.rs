@@ -1,10 +1,10 @@
 extern crate rand;
 
-pub mod nn;
+mod nn;
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use super::nn::NeuralNetwork;
 
     #[test]
     #[should_panic]
