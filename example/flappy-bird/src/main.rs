@@ -7,9 +7,12 @@ use std::cmp::Ordering;
 
 const POPULATION_SIZE: usize = 100;
 
-const LEVEL_HEIGHT: u32 = 10;
+const LEVEL_HEIGHT: i32 = 24;
 const UP_KEY_VELOCITY: f32 = -0.5;
 const GRAVITY: f32 = 0.05;
+
+const WINDOW_HEIGHT: i32 = 22;
+const WINDOW_WIDTH: i32 = 78;
 
 struct Population {
     birds: Vec<Bird>
@@ -40,7 +43,16 @@ impl Population {
         }
     }
 
-    pub fn get_farthest_bird(&self) -> Option<&Bird> {
+    pub fn draw(&self, win: WINDOW) {
+        let farthest_x = self.farthest_bird().unwrap().x;
+        let cam_x = farthest_x - WINDOW_WIDTH / 2;
+
+        for bird in self.birds.iter() {
+            bird.draw(win, cam_x);
+        }
+    }
+
+    pub fn farthest_bird(&self) -> Option<&Bird> {
         self.birds.iter().max()
     }
 }
@@ -75,21 +87,22 @@ impl Bird {
         self.x = 0;
     }
 
-    pub fn draw(&self) {
-        let height = self.height();
+    pub fn draw(&self, win: WINDOW, x_offset: i32) {
+        let x = self.x - x_offset;
+        let y = LEVEL_HEIGHT - self.height() - 1;
 
         // Draw a bird depending on if it just flapped
         if self.last_time < 10 && (self.last_time / 4) % 2 == 0 {
-            mvprintw(self.x, height, "-o-");
+            mvwprintw(win, y, x, "-o-");
         } else {
-            mvprintw(self.x, height, "\\o/");
+            mvwprintw(win, y, x, "\\o/");
         }
     }
 }
 
-// Order the birds by x distance
 impl Ord for Bird {
     fn cmp(&self, other: &Bird) -> Ordering {
+        // Order the birds by x distance
         self.x.cmp(&other.x)
     }
 }
@@ -106,21 +119,46 @@ impl PartialEq for Bird {
     }
 }
 
-fn init_ncurses() {
+fn init_ncurses() -> WINDOW {
     initscr();
     raw();
+    // Allow the extended keyboard
     keypad(stdscr(), true);
     noecho();
+
+    // Hide the cursor
     curs_set(CURSOR_VISIBILITY::CURSOR_INVISIBLE);
     timeout(0);
+
+    // Get the screen bounds
+    let mut max_y = 0;
+    let mut max_x = 0;
+    getmaxyx(stdscr(), &mut max_y, &mut max_x);
+
+    // Start the window in the center
+    let start_y = (max_y - WINDOW_HEIGHT) / 2;
+    let start_x = (max_x - WINDOW_WIDTH) / 2;
+    let win = newwin(WINDOW_HEIGHT, WINDOW_WIDTH, start_y, start_x);
+    box_(win, 0, 0);
+    wrefresh(win);
+    win
 }
 
-fn close_ncurses() {
+fn draw_ncurses(win: WINDOW) {
+    // Draw the window edges
+    box_(win, 0, 0);
+
+    wrefresh(win);
+    refresh();
+}
+
+fn close_ncurses(win: WINDOW) {
+    delwin(win);
     endwin();
 }
 
 fn main() {
-    init_ncurses();
+    let win = init_ncurses();
 
     let mut pop = Population::new(POPULATION_SIZE);
 
@@ -128,11 +166,15 @@ fn main() {
     while ch != 'q' as i32 {
         pop.tick();
 
-        refresh();
+        // Clear the window
+        werase(win);
+        pop.draw(win);
+
+        draw_ncurses(win);
     
         thread::sleep(Duration::from_millis(1000 / 30));
         ch = getch();
     }
 
-    close_ncurses();
+    close_ncurses(win);
 }
