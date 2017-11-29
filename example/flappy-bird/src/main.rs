@@ -6,6 +6,9 @@ use std::time::Duration;
 use std::cmp::Ordering;
 
 const POPULATION_SIZE: usize = 100;
+const PIPE_AMOUNT: usize = 100;
+
+const PIPE_OFFSET: i32 = 5;
 
 const LEVEL_HEIGHT: i32 = 24;
 const UP_KEY_VELOCITY: f32 = -0.5;
@@ -14,15 +17,80 @@ const GRAVITY: f32 = 0.05;
 const WINDOW_HEIGHT: i32 = 22;
 const WINDOW_WIDTH: i32 = 78;
 
+struct Level {
+    population: Population,
+    pipes: Vec<Pipe>
+}
+
+impl Level {
+    pub fn new() -> Level {
+        let mut pipes = Vec::new();
+
+        for i in 1 .. PIPE_AMOUNT + 1 {
+            pipes.push(Pipe::new(i as i32 * PIPE_OFFSET));
+        }
+
+        Level {
+            population: Population::new(),
+            pipes: pipes
+        }
+    }
+
+    pub fn tick(&mut self) {
+        self.population.tick();
+    }
+
+    pub fn draw(&self, win: WINDOW) {
+        let farthest_x = self.population.farthest_bird().unwrap().x;
+        let cam_x = farthest_x - WINDOW_WIDTH / 2;
+
+        self.population.draw(win, cam_x);
+
+        for pipe in self.pipes.iter() {
+            pipe.draw(win, cam_x);
+        }
+    }
+}
+
+struct Pipe {
+    x: i32,
+    y_center: i32,
+    opening_height: f32
+}
+
+impl Pipe {
+    pub fn new(x: i32) -> Pipe {
+        Pipe {
+            x: x,
+            y_center: LEVEL_HEIGHT / 2,
+            opening_height: 0.2
+        }
+    }
+
+    pub fn draw(&self, win: WINDOW, x_offset: i32) {
+        let x = self.x - x_offset;
+
+        let opening_height = (LEVEL_HEIGHT as f32 * self.opening_height) as i32;
+
+        // Draw top part of the pipe
+        let top_y = LEVEL_HEIGHT - self.y_center - opening_height;
+        mvwvline(win, 1, x, 0, top_y - 1);
+
+        // Draw bottom part of the pipe
+        let bottom_y = LEVEL_HEIGHT - self.y_center + opening_height;
+        mvwvline(win, bottom_y, x, 0, LEVEL_HEIGHT - bottom_y);
+    }
+}
+
 struct Population {
     birds: Vec<Bird>
 }
 
 impl Population {
-    pub fn new(bird_amount: usize) -> Population {
+    pub fn new() -> Population {
         let mut birds = Vec::new();
 
-        for i in 0 .. bird_amount {
+        for i in 0 .. POPULATION_SIZE {
             birds.push(Bird::new(i as i32));
         }
 
@@ -43,10 +111,7 @@ impl Population {
         }
     }
 
-    pub fn draw(&self, win: WINDOW) {
-        let farthest_x = self.farthest_bird().unwrap().x;
-        let cam_x = farthest_x - WINDOW_WIDTH / 2;
-
+    pub fn draw(&self, win: WINDOW, cam_x: i32) {
         for bird in self.birds.iter() {
             bird.draw(win, cam_x);
         }
@@ -160,15 +225,15 @@ fn close_ncurses(win: WINDOW) {
 fn main() {
     let win = init_ncurses();
 
-    let mut pop = Population::new(POPULATION_SIZE);
+    let mut level = Level::new();
 
     let mut ch = getch();
     while ch != 'q' as i32 {
-        pop.tick();
+        level.tick();
 
         // Clear the window
         werase(win);
-        pop.draw(win);
+        level.draw(win);
 
         draw_ncurses(win);
     
