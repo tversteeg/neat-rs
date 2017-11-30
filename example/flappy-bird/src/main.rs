@@ -37,7 +37,7 @@ impl Level {
     }
 
     pub fn tick(&mut self) {
-        self.population.tick();
+        self.population.tick(&self.pipes);
     }
 
     pub fn draw(&self, win: WINDOW) {
@@ -99,7 +99,7 @@ impl Population {
         }
     }
 
-    pub fn tick(&mut self) {
+    pub fn tick(&mut self, pipes: &Vec<Pipe>) {
         for bird in self.birds.iter_mut() {
             bird.x += 1;
             bird.last_time += 1;
@@ -107,6 +107,13 @@ impl Population {
             let height = bird.height();
             if height < 0 || height > LEVEL_HEIGHT as i32 {
                 bird.reset();
+            }
+
+            for pipe in pipes.iter() {
+                if bird.collides_with_pipe(pipe) {
+                    bird.reset();
+                    break;
+                }
             }
         }
     }
@@ -154,7 +161,7 @@ impl Bird {
 
     pub fn draw(&self, win: WINDOW, x_offset: i32) {
         let x = self.x - x_offset;
-        let y = LEVEL_HEIGHT - self.height() - 1;
+        let y = self.height() - 1;
 
         // Draw a bird depending on if it just flapped
         if self.last_time < 10 && (self.last_time / 4) % 2 == 0 {
@@ -162,6 +169,19 @@ impl Bird {
         } else {
             mvwprintw(win, y, x, "\\o/");
         }
+    }
+
+    pub fn collides_with_pipe(&self, pipe: &Pipe) -> bool {
+        if self.x != pipe.x {
+            return false;
+        }
+
+        let height = self.height();
+
+        let opening = (WINDOW_HEIGHT as f32 * pipe.opening_height) as i32;
+
+        // Check if the bird collides with the top and bottom part
+        height > pipe.y_center + opening || height < pipe.y_center - opening
     }
 }
 
