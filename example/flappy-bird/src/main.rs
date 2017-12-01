@@ -1,9 +1,11 @@
 extern crate ncurses;
+extern crate rand;
 
 use ncurses::*;
 use std::thread;
 use std::time::Duration;
 use std::cmp::Ordering;
+use rand::Rng;
 
 const POPULATION_SIZE: usize = 100;
 const PIPE_AMOUNT: usize = 100;
@@ -154,7 +156,8 @@ impl Bird {
     }
 
     pub fn reset(&mut self) {
-        self.last_height = 0;
+        let mut rng = rand::thread_rng();
+        self.last_height = (rng.gen::<f32>() * LEVEL_HEIGHT as f32) as i32;
         self.last_time = 0;
         self.x = 0;
     }
