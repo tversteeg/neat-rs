@@ -1,4 +1,5 @@
 extern crate rand;
+extern crate libc;
 
 mod nn;
 
